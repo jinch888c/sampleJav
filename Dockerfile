@@ -1,2 +1,2 @@
 FROM openjdk
-ENTRYPOINT ["/usr/bin/java", "start"]
+ENTRYPOINT ["/usr/bin/java", "version"]
