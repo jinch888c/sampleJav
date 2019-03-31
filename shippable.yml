@@ -26,10 +26,7 @@ env:
     - SHIP_IMG_RES=$DOCKER_REPO"_img_dh"
 # Version number
 jdk:
-  - openjdk6
-  - openjdk7
-  - oraclejdk7
-  - oraclejdk8
+  - openjdk8
 
 build:
   ci:
