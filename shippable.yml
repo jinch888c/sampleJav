@@ -1,6 +1,29 @@
 # Language setting
 language: java
 
+integrations:
+  # adding docker hub integration so that credentials are available to CI Job
+  # http://docs.shippable.com/platform/integration/dockerRegistryLogin/
+  hub:
+    - integrationName: mytest
+      type: dockerRegistryLogin
+
+# use this to control what branches get built.
+# http://docs.shippable.com/ci/advancedOptions/branches/
+branches:
+  only:
+    - master
+
+# using pre-defined build variables
+# full list http://docs.shippable.com/ci/advancedOptions/environmentVariables/
+env:
+  global:
+    - TEST_RESULTS_DIR=$SHIPPABLE_REPO_DIR/shippable/testresults
+    - CODE_COVERAGE_DIR=$SHIPPABLE_REPO_DIR/shippable/codecoverage
+    - TESTS_LOC_DIR=$SHIPPABLE_REPO_DIR/tests
+    - DOCKER_REPO="test"
+    - DOCKER_ACC=stevenshudockerhub # {account name}
+    - SHIP_IMG_RES=$DOCKER_REPO"_img_dh"
 # Version number
 jdk:
   - openjdk6
@@ -11,3 +34,31 @@ jdk:
 build:
   ci:
     - java -version
+    # http://docs.shippable.com/ci/shippableyml/#post_ci
+  post_ci:
+    - docker build -t $DOCKER_ACC/$DOCKER_REPO:$BRANCH.$BUILD_NUMBER .
+    - if [ "$IS_PULL_REQUEST" != true ]; then docker push $DOCKER_ACC/$DOCKER_REPO:$BRANCH.$BUILD_NUMBER; fi
+    
+  #this will be ignored if you are not using Assembly Lines to trigger another job after ci  
+  on_success:
+    - shipctl put_resource_state $SHIP_IMG_RES versionName $BRANCH.$BUILD_NUMBER
+
+## OPTIONAL : In case you want to use this image in CD Assembly Lines
+resources:
+  - name: sampleJav_img_dh
+    type: image
+    integration: mytest # replace with your integration name
+    versionTemplate:
+      sourceName: "stevenshudockerhub/test" # replace with your Hub URL
+      isPull: false
+      versionName: latest
+
+jobs:
+  - name: sampleJav_runCI
+    type: runCI
+    dependencyMode: strict
+    triggerMode: parallel
+    steps:
+      - OUT: sampleJav_img_dh
+    flags:
+      - sampleJav
