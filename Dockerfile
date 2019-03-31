@@ -1,2 +1,2 @@
-FROM openjdk8
+FROM openjdk
 ENTRYPOINT ["/usr/bin/java", "start"]
